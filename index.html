@@ -261,6 +261,79 @@
             pointer-events: none; z-index: 1;
             background: radial-gradient(ellipse at 50% 20%, rgba(255,150,50,0.02) 0%, transparent 50%);
         }
+
+        /* HELP BUTTON */
+        #help-btn {
+            position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+            z-index: 9000; font-family: 'Special Elite', cursive; font-size: 11px;
+            background: transparent; color: #554433; border: 1px solid #332211;
+            padding: 4px 14px; border-radius: 3px; cursor: pointer;
+            transition: all 0.3s; letter-spacing: 1px; display: none;
+        }
+        #help-btn:hover { color: #cc8800; border-color: #cc8800; }
+
+        /* TUTORIAL OVERLAY */
+        #tutorial-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(5,4,3,0.96); display: none; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 9997;
+            padding: 30px; overflow-y: auto;
+        }
+        #tutorial-overlay .tutorial-content {
+            max-width: 560px; width: 100%; text-align: left;
+        }
+        #tutorial-overlay h2 {
+            font-family: 'Playfair Display', serif; font-size: 32px; color: #cc8800;
+            text-align: center; margin-bottom: 25px;
+        }
+        #tutorial-overlay h3 {
+            font-size: 15px; color: #cc8800; margin: 20px 0 10px;
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+        #tutorial-overlay p {
+            font-size: 13px; color: #a09070; line-height: 1.8; margin-bottom: 10px;
+        }
+        #tutorial-overlay .step {
+            display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px;
+        }
+        #tutorial-overlay .step-num {
+            background: #cc8800; color: #0a0806; width: 24px; height: 24px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: bold; flex-shrink: 0; margin-top: 2px;
+        }
+        #tutorial-overlay .step-text {
+            font-size: 13px; color: #c4a060; line-height: 1.6;
+        }
+        #tutorial-overlay .card-legend {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;
+        }
+        #tutorial-overlay .legend-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; color: #a09070; padding: 6px 10px;
+            background: rgba(255,255,255,0.03); border-radius: 4px;
+        }
+        #tutorial-overlay .legend-icon { font-size: 18px; }
+        #tutorial-overlay .legend-type {
+            font-size: 9px; padding: 1px 5px; border-radius: 3px;
+            text-transform: uppercase; font-weight: bold;
+        }
+        .legend-type.poison { background: #3a1a1a; color: #ff4444; }
+        .legend-type.safe { background: #1a3a1a; color: #44cc44; }
+        .legend-type.risky { background: #3a3a1a; color: #cccc44; }
+        .legend-type.dark { background: #1a1a2a; color: #8844cc; }
+        .legend-type.wild { background: #2a1a2a; color: #cc44cc; }
+        #tutorial-overlay .tip {
+            background: rgba(200,120,0,0.08); border-left: 3px solid #cc8800;
+            padding: 10px 14px; margin-top: 15px; border-radius: 0 4px 4px 0;
+        }
+        #tutorial-overlay .tip p { color: #c4a060; margin: 0; font-style: italic; }
+        #tutorial-overlay .close-btn {
+            display: block; margin: 30px auto 0; padding: 12px 40px;
+            font-family: 'Special Elite', cursive; font-size: 15px;
+            background: transparent; color: #cc8800; border: 1px solid #cc8800;
+            cursor: pointer; letter-spacing: 2px; transition: all 0.3s;
+        }
+        #tutorial-overlay .close-btn:hover { background: rgba(200,120,0,0.1); box-shadow: 0 0 20px rgba(200,120,0,0.2); }
     </style>
 </head>
 <body>
@@ -274,11 +347,49 @@
     <div id="title-screen">
         <h1>LAST CALL</h1>
         <h2>A game of poison and patience</h2>
-        <button class="start-btn" onclick="startGame()">TAKE YOUR SHIFT</button>
+        <button class="start-btn" onclick="showTutorial()">TAKE YOUR SHIFT</button>
         <div class="flavor">
             It's 3 AM. The bar is empty.<br>
             One customer remains.<br>
             He wants to play a game.
+        </div>
+    </div>
+
+    <button id="help-btn" onclick="showTutorial()">? HOW TO PLAY</button>
+
+    <div id="tutorial-overlay">
+        <div class="tutorial-content">
+            <h2>How To Play</h2>
+
+            <h3>The Rules</h3>
+            <p>You and The Stranger each have <strong style="color:#cc8800">5 HP</strong>. Take turns mixing drinks. First to reach 0 HP loses.</p>
+
+            <h3>Each Round</h3>
+            <div class="step"><div class="step-num">1</div><div class="step-text"><strong style="color:#cc8800">Pick 2 ingredients</strong> from your hand of 5 cards. They get mixed into a single drink.</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text"><strong style="color:#ff6644">SERVE HIM</strong> &mdash; he drinks it (good if it's poison)<br><strong style="color:#44cc88">DRINK IT</strong> &mdash; you drink it (good if it heals)</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text"><strong style="color:#cc8800">The Stranger takes his turn</strong> &mdash; he mixes a drink and either serves you or drinks it himself.</div></div>
+
+            <h3>Ingredients</h3>
+            <div class="card-legend">
+                <div class="legend-item"><span class="legend-icon">🥃</span><span class="legend-type safe">safe</span> Whiskey &mdash; Heals 1</div>
+                <div class="legend-item"><span class="legend-icon">🍯</span><span class="legend-type safe">safe</span> Honey &mdash; Cancels poison</div>
+                <div class="legend-item"><span class="legend-icon">🧊</span><span class="legend-type safe">safe</span> Ice &mdash; Reduces dmg by 1</div>
+                <div class="legend-item"><span class="legend-icon">🍶</span><span class="legend-type safe">safe</span> Bitters &mdash; Heals 1</div>
+                <div class="legend-item"><span class="legend-icon">☠️</span><span class="legend-type poison">poison</span> Nightshade &mdash; 2 dmg</div>
+                <div class="legend-item"><span class="legend-icon">💀</span><span class="legend-type poison">poison</span> Hemlock &mdash; 3 dmg</div>
+                <div class="legend-item"><span class="legend-icon">🌿</span><span class="legend-type risky">risky</span> Wormwood &mdash; +1 next</div>
+                <div class="legend-item"><span class="legend-icon">🧪</span><span class="legend-type risky">risky</span> Absinthe &mdash; 50/50</div>
+                <div class="legend-item"><span class="legend-icon">🩸</span><span class="legend-type dark">dark</span> Blood &mdash; 1 to both</div>
+                <div class="legend-item"><span class="legend-icon">🌙</span><span class="legend-type wild">wild</span> Moonshine &mdash; Doubles other</div>
+            </div>
+
+            <h3>Strategy Tips</h3>
+            <div class="tip"><p>Mix poison + poison, then SERVE HIM for maximum damage.</p></div>
+            <div class="tip"><p>Mix safe + safe, then DRINK IT to heal yourself.</p></div>
+            <div class="tip"><p>Honey cancels ALL poison in a drink &mdash; use it to make a poisoned drink safe before drinking.</p></div>
+            <div class="tip"><p>Moonshine copies the other ingredient &mdash; Hemlock + Moonshine = double poison!</p></div>
+
+            <button class="close-btn" onclick="closeTutorial()">I UNDERSTAND. LET'S PLAY.</button>
         </div>
     </div>
 
@@ -725,11 +836,23 @@
         setTimeout(()=>{el.style.opacity='0';},250);
     }
 
+    // ===== TUTORIAL =====
+    let tutorialSeen = false;
+    function showTutorial() {
+        document.getElementById('title-screen').style.display='none';
+        document.getElementById('tutorial-overlay').style.display='flex';
+    }
+    function closeTutorial() {
+        document.getElementById('tutorial-overlay').style.display='none';
+        if(!tutorialSeen) { tutorialSeen=true; startGame(); }
+    }
+
     // ===== START =====
     function startGame() {
         initAudio();
         document.getElementById('title-screen').style.display='none';
         document.getElementById('game').style.display='flex';
+        document.getElementById('help-btn').style.display='block';
         initRain(); resetGame();
         showDialogue(D.intro[0],3500);
         setTimeout(()=>showDialogue(D.intro[1],3500),4000);
