@@ -1,884 +1,193 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LAST CALL</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap');
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #0a0806;
-            color: #d4c5a0;
-            font-family: 'Special Elite', cursive;
-            overflow: hidden;
-            height: 100vh;
-            user-select: none;
-        }
-
-        #rain {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none; z-index: 1000; opacity: 0.12;
-        }
-
-        #game {
-            width: 100vw; height: 100vh;
-            display: none; flex-direction: column;
-            position: relative;
-            background: radial-gradient(ellipse at 50% 80%, #1a1208 0%, #0a0806 70%);
-        }
-
-        /* BAR SURFACE */
-        #bar-surface {
-            position: absolute; bottom: 0; left: 0; right: 0; height: 32vh;
-            background: linear-gradient(to bottom, #2a1a0a, #1a0f05);
-            border-top: 3px solid #3a2a15;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-        }
-        #bar-surface::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(to right, transparent, rgba(255,200,100,0.15), transparent);
-        }
-
-        /* STRANGER */
-        #stranger-area { position: absolute; top: 4vh; left: 50%; transform: translateX(-50%); text-align: center; }
-        #stranger-figure {
-            width: 130px; height: 190px; margin: 0 auto 10px;
-            background: radial-gradient(ellipse at 50% 30%, #1a1a2a 0%, #050508 60%);
-            border-radius: 50% 50% 30% 30%; position: relative;
-            box-shadow: 0 0 60px rgba(0,0,0,0.8);
-            transition: all 0.5s;
-        }
-        #stranger-figure.damaged {
-            box-shadow: 0 0 60px rgba(255,0,0,0.3);
-            animation: strangerShake 0.3s;
-        }
-        @keyframes strangerShake {
-            0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)}
-        }
-        #stranger-eyes {
-            position: absolute; top: 28%; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 22px;
-        }
-        .eye {
-            width: 8px; height: 8px; background: #ff3300; border-radius: 50%;
-            box-shadow: 0 0 10px #ff3300, 0 0 20px #ff330066;
-            animation: eyePulse 3s ease-in-out infinite;
-            transition: all 0.3s;
-        }
-        .eye.angry { width: 10px; height: 6px; background: #ff0000; box-shadow: 0 0 15px #ff0000; }
-        @keyframes eyePulse { 0%,100%{opacity:0.7;transform:scale(1)} 50%{opacity:1;transform:scale(1.2)} }
-
-        /* STRANGER SMILE - appears when he's winning */
-        #stranger-smile {
-            position: absolute; top: 55%; left: 50%; transform: translateX(-50%);
-            width: 30px; height: 15px; border-bottom: 2px solid #ff3300;
-            border-radius: 0 0 50% 50%; opacity: 0; transition: opacity 0.5s;
-        }
-        #stranger-smile.visible { opacity: 0.6; }
-
-        /* DIALOGUE */
-        #dialogue-box {
-            position: absolute; top: 27vh; left: 50%; transform: translateX(-50%);
-            max-width: 520px; width: 85%; text-align: center;
-            font-size: 15px; color: #c4a060; font-style: italic; line-height: 1.7;
-            min-height: 50px; opacity: 0; transition: opacity 0.5s;
-        }
-        #dialogue-box.visible { opacity: 1; }
-
-        /* HP */
-        #hp-area {
-            position: absolute; top: 12px; left: 0; right: 0;
-            display: flex; justify-content: space-between; padding: 0 25px; z-index: 50;
-        }
-        .hp-container { display: flex; flex-direction: column; align-items: center; }
-        .hp-label { font-size: 10px; color: #887755; margin-bottom: 4px; letter-spacing: 2px; text-transform: uppercase; }
-        .hp-bar { display: flex; gap: 3px; }
-        .hp-pip {
-            width: 20px; height: 26px; border-radius: 3px; border: 1px solid #554422;
-            transition: all 0.4s;
-        }
-        .hp-pip.full { background: linear-gradient(to bottom, #cc8800, #884400); border-color: #aa6600; box-shadow: 0 0 6px rgba(200,120,0,0.3); }
-        .hp-pip.empty { background: #1a1008; border-color: #332211; }
-        .hp-pip.damage { background: #ff2200; border-color: #ff4400; box-shadow: 0 0 10px rgba(255,0,0,0.5); animation: pipDamage 0.5s; }
-        @keyframes pipDamage { 0%{transform:scale(1.3)} 100%{transform:scale(1)} }
-
-        /* CARDS */
-        #cards-area {
-            position: absolute; bottom: 6vh; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 10px; z-index: 100;
-        }
-        .card {
-            width: 95px; height: 135px; background: #f5e6c8; border-radius: 6px;
-            border: 2px solid #c4a060; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; padding: 8px;
-            cursor: pointer; transition: all 0.2s; position: relative;
-            box-shadow: 2px 4px 10px rgba(0,0,0,0.4);
-        }
-        .card:hover { transform: translateY(-10px); box-shadow: 2px 8px 20px rgba(0,0,0,0.5); border-color: #ffcc00; }
-        .card.selected { transform: translateY(-16px); border-color: #ff6600; box-shadow: 0 0 15px rgba(255,100,0,0.4); }
-        .card.disabled { opacity: 0.35; pointer-events: none; transform: none; }
-        .card-icon { font-size: 30px; margin-bottom: 5px; }
-        .card-name { font-size: 11px; color: #4a3a20; text-align: center; font-weight: bold; }
-        .card-desc { font-size: 8px; color: #7a6a50; text-align: center; margin-top: 3px; line-height: 1.3; }
-        .card-type {
-            position: absolute; top: 4px; right: 5px; font-size: 7px;
-            padding: 1px 4px; border-radius: 3px; text-transform: uppercase; font-weight: bold;
-        }
-        .card-type.poison { background: #3a1a1a; color: #ff4444; }
-        .card-type.safe { background: #1a3a1a; color: #44cc44; }
-        .card-type.risky { background: #3a3a1a; color: #cccc44; }
-        .card-type.dark { background: #1a1a2a; color: #8844cc; }
-        .card-type.wild { background: #2a1a2a; color: #cc44cc; }
-        @keyframes cardDeal { from{opacity:0;transform:translateY(30px) scale(0.8)} to{opacity:1;transform:translateY(0) scale(1)} }
-        .card-deal { animation: cardDeal 0.3s ease-out forwards; }
-
-        /* GLASSES */
-        #drink-area {
-            position: absolute; bottom: 36vh; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 50px; align-items: flex-end; z-index: 50;
-        }
-        .glass-wrapper { text-align: center; }
-        .glass {
-            width: 44px; height: 65px; border: 2px solid rgba(200,200,200,0.25);
-            border-top: none; border-radius: 0 0 8px 8px; position: relative;
-            background: rgba(0,0,0,0.3); margin: 0 auto;
-        }
-        .glass-liquid {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            border-radius: 0 0 6px 6px; transition: height 0.6s, background 0.6s;
-        }
-        .glass-label { font-size: 9px; color: #776644; margin-top: 6px; letter-spacing: 1px; text-transform: uppercase; }
-
-        /* ACTION BUTTONS */
-        #action-area {
-            position: absolute; bottom: 40vh; left: 50%; transform: translateX(-50%);
-            display: none; gap: 20px; z-index: 100;
-        }
-        .action-btn {
-            padding: 12px 30px; font-family: 'Special Elite', cursive; font-size: 14px;
-            border: 2px solid; border-radius: 4px; cursor: pointer;
-            transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px;
-        }
-        .action-btn:hover { transform: scale(1.05); }
-        #btn-serve { background: #2a1a0a; color: #ff6644; border-color: #ff6644; }
-        #btn-serve:hover { background: #3a1a0a; box-shadow: 0 0 15px rgba(255,100,50,0.3); }
-        #btn-drink { background: #0a2a1a; color: #44cc88; border-color: #44cc88; }
-        #btn-drink:hover { background: #0a3a1a; box-shadow: 0 0 15px rgba(50,200,100,0.3); }
-
-        /* ROUND INFO */
-        #round-info {
-            position: absolute; top: 52px; left: 50%; transform: translateX(-50%);
-            font-size: 11px; color: #554433; letter-spacing: 3px; text-transform: uppercase;
-        }
-
-        /* NEON SIGN */
-        #neon-sign {
-            position: absolute; top: 2vh; left: 50%; transform: translateX(-50%);
-            font-family: 'Playfair Display', serif; font-size: 18px; color: #ff4400;
-            text-shadow: 0 0 10px #ff4400, 0 0 20px #ff440066, 0 0 40px #ff440033;
-            opacity: 0.5; animation: neonFlicker 4s ease-in-out infinite; z-index: 2;
-        }
-        @keyframes neonFlicker { 0%,100%{opacity:0.5} 5%{opacity:0.2} 6%{opacity:0.6} 50%{opacity:0.4} 55%{opacity:0.7} 56%{opacity:0.3} }
-
-        /* STATUS */
-        #status-text {
-            position: absolute; bottom: 1.5vh; left: 50%; transform: translateX(-50%);
-            font-size: 11px; color: #554433; letter-spacing: 1px; z-index: 100;
-        }
-
-        /* TITLE SCREEN */
-        #title-screen {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: #0a0806; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 9999;
-        }
-        #title-screen h1 {
-            font-family: 'Playfair Display', serif; font-size: 68px; color: #cc8800;
-            text-shadow: 0 0 40px rgba(200,120,0,0.3); margin-bottom: 8px; letter-spacing: 4px;
-        }
-        #title-screen h2 { font-size: 13px; color: #665533; margin-bottom: 45px; font-style: italic; font-weight: normal; }
-        .start-btn {
-            padding: 13px 38px; font-family: 'Special Elite', cursive; font-size: 15px;
-            background: transparent; color: #cc8800; border: 1px solid #cc8800;
-            cursor: pointer; letter-spacing: 2px; transition: all 0.3s;
-        }
-        .start-btn:hover { background: rgba(200,120,0,0.1); box-shadow: 0 0 20px rgba(200,120,0,0.2); }
-        #title-screen .flavor {
-            margin-top: 35px; font-size: 12px; color: #443322; font-style: italic;
-            max-width: 280px; text-align: center; line-height: 1.9;
-        }
-
-        /* RESULT OVERLAY */
-        #result-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.92); display: none; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 9998;
-        }
-        #result-overlay h1 { font-family: 'Playfair Display', serif; font-size: 48px; margin-bottom: 20px; }
-        #result-overlay p {
-            font-size: 15px; color: #887755; margin-bottom: 30px; font-style: italic;
-            max-width: 420px; text-align: center; line-height: 1.7;
-        }
-
-        /* EFFECT FLASH */
-        #effect-flash {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none; z-index: 500; opacity: 0; transition: opacity 0.15s;
-        }
-
-        /* VIGNETTE - intensifies as HP drops */
-        #vignette {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none; z-index: 400;
-            background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
-            transition: opacity 0.5s; opacity: 0.3;
-        }
-
-        /* HEARTBEAT OVERLAY */
-        #heartbeat {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none; z-index: 450; opacity: 0;
-            border: 8px solid rgba(255,0,0,0.15); border-radius: 0;
-            animation: heartbeat 1s ease-in-out infinite;
-        }
-        @keyframes heartbeat {
-            0%,100%{border-color:rgba(255,0,0,0.05)} 50%{border-color:rgba(255,0,0,0.2)}
-        }
-
-        /* TOOLTIP */
-        #tooltip {
-            position: fixed; background: #1a1208; border: 1px solid #3a2a15;
-            padding: 8px 12px; border-radius: 4px; font-size: 11px;
-            color: #c4a060; pointer-events: none; z-index: 2000;
-            display: none; max-width: 200px; line-height: 1.4;
-        }
-
-        /* AMBIENT */
-        #ambient {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none; z-index: 1;
-            background: radial-gradient(ellipse at 50% 20%, rgba(255,150,50,0.02) 0%, transparent 50%);
-        }
-
-        /* HELP BUTTON */
-        #help-btn {
-            position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
-            z-index: 9000; font-family: 'Special Elite', cursive; font-size: 11px;
-            background: transparent; color: #554433; border: 1px solid #332211;
-            padding: 4px 14px; border-radius: 3px; cursor: pointer;
-            transition: all 0.3s; letter-spacing: 1px; display: none;
-        }
-        #help-btn:hover { color: #cc8800; border-color: #cc8800; }
-
-        /* TUTORIAL OVERLAY */
-        #tutorial-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(5,4,3,0.96); display: none; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 9997;
-            padding: 30px; overflow-y: auto;
-        }
-        #tutorial-overlay .tutorial-content {
-            max-width: 560px; width: 100%; text-align: left;
-        }
-        #tutorial-overlay h2 {
-            font-family: 'Playfair Display', serif; font-size: 32px; color: #cc8800;
-            text-align: center; margin-bottom: 25px;
-        }
-        #tutorial-overlay h3 {
-            font-size: 15px; color: #cc8800; margin: 20px 0 10px;
-            letter-spacing: 1px; text-transform: uppercase;
-        }
-        #tutorial-overlay p {
-            font-size: 13px; color: #a09070; line-height: 1.8; margin-bottom: 10px;
-        }
-        #tutorial-overlay .step {
-            display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px;
-        }
-        #tutorial-overlay .step-num {
-            background: #cc8800; color: #0a0806; width: 24px; height: 24px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 12px; font-weight: bold; flex-shrink: 0; margin-top: 2px;
-        }
-        #tutorial-overlay .step-text {
-            font-size: 13px; color: #c4a060; line-height: 1.6;
-        }
-        #tutorial-overlay .card-legend {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;
-        }
-        #tutorial-overlay .legend-item {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 12px; color: #a09070; padding: 6px 10px;
-            background: rgba(255,255,255,0.03); border-radius: 4px;
-        }
-        #tutorial-overlay .legend-icon { font-size: 18px; }
-        #tutorial-overlay .legend-type {
-            font-size: 9px; padding: 1px 5px; border-radius: 3px;
-            text-transform: uppercase; font-weight: bold;
-        }
-        .legend-type.poison { background: #3a1a1a; color: #ff4444; }
-        .legend-type.safe { background: #1a3a1a; color: #44cc44; }
-        .legend-type.risky { background: #3a3a1a; color: #cccc44; }
-        .legend-type.dark { background: #1a1a2a; color: #8844cc; }
-        .legend-type.wild { background: #2a1a2a; color: #cc44cc; }
-        #tutorial-overlay .tip {
-            background: rgba(200,120,0,0.08); border-left: 3px solid #cc8800;
-            padding: 10px 14px; margin-top: 15px; border-radius: 0 4px 4px 0;
-        }
-        #tutorial-overlay .tip p { color: #c4a060; margin: 0; font-style: italic; }
-        #tutorial-overlay .close-btn {
-            display: block; margin: 30px auto 0; padding: 12px 40px;
-            font-family: 'Special Elite', cursive; font-size: 15px;
-            background: transparent; color: #cc8800; border: 1px solid #cc8800;
-            cursor: pointer; letter-spacing: 2px; transition: all 0.3s;
-        }
-        #tutorial-overlay .close-btn:hover { background: rgba(200,120,0,0.1); box-shadow: 0 0 20px rgba(200,120,0,0.2); }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080706">
+  <meta name="description" content="LAST CALL — an occult bartending duel of poison, bluff, and nerve.">
+  <title>LAST CALL — An Occult Bartending Duel</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="game-core.js" defer></script>
+  <script src="game.js" defer></script>
 </head>
 <body>
-    <canvas id="rain"></canvas>
-    <div id="ambient"></div>
-    <div id="vignette"></div>
-    <div id="heartbeat"></div>
-    <div id="effect-flash"></div>
-    <div id="tooltip"></div>
+  <div class="rain" aria-hidden="true"></div>
 
-    <div id="title-screen">
-        <h1>LAST CALL</h1>
-        <h2>A game of poison and patience</h2>
-        <button class="start-btn" onclick="showTutorial()">TAKE YOUR SHIFT</button>
-        <div class="flavor">
-            It's 3 AM. The bar is empty.<br>
-            One customer remains.<br>
-            He wants to play a game.
-        </div>
+  <main id="title-screen" class="title-screen" aria-labelledby="title-heading">
+    <section class="title-copy">
+      <p class="eyebrow">Nocturne No. 13 · 3:00 AM</p>
+      <h1 id="title-heading">Last <span>Call</span></h1>
+      <p class="title-deck">Two glasses. One debt.<br>The devil always tips.</p>
+      <div class="title-actions">
+        <button id="begin-button" class="button button-primary" type="button">Open the bar</button>
+        <button id="rules-button" class="button button-quiet" type="button">Read the house rules</button>
+      </div>
+      <dl class="ledger" aria-label="Night ledger">
+        <div><dt>Nights</dt><dd id="title-games">0</dd></div>
+        <div><dt>Survived</dt><dd id="title-wins">0</dd></div>
+        <div><dt>Recipes found</dt><dd id="title-recipes">0</dd></div>
+      </dl>
+    </section>
+
+    <div class="title-offer" aria-hidden="true">
+      <div class="title-hand title-hand-left"></div>
+      <div class="glass glass-title">
+        <div class="glass-sheen"></div>
+        <div class="glass-liquid"></div>
+      </div>
+      <div class="title-hand title-hand-right"></div>
+      <p>Would you care to choose?</p>
     </div>
+  </main>
 
-    <button id="help-btn" onclick="showTutorial()">? HOW TO PLAY</button>
+  <main id="game-shell" class="game-shell" hidden>
+    <header class="game-header">
+      <div>
+        <p id="round-label" class="eyebrow">Round I</p>
+        <p id="night-clock" class="night-clock">03:00:00</p>
+      </div>
+      <h1 class="wordmark">Last <span>Call</span></h1>
+      <nav aria-label="Game controls">
+        <button id="sound-button" class="icon-button" type="button" aria-pressed="true">Sound on</button>
+        <button id="game-rules-button" class="icon-button" type="button">Rules</button>
+      </nav>
+    </header>
 
-    <div id="tutorial-overlay">
-        <div class="tutorial-content">
-            <h2>How To Play</h2>
-
-            <h3>The Rules</h3>
-            <p>You and The Stranger each have <strong style="color:#cc8800">5 HP</strong>. Take turns mixing drinks. First to reach 0 HP loses.</p>
-
-            <h3>Each Round</h3>
-            <div class="step"><div class="step-num">1</div><div class="step-text"><strong style="color:#cc8800">Pick 2 ingredients</strong> from your hand of 5 cards. They get mixed into a single drink.</div></div>
-            <div class="step"><div class="step-num">2</div><div class="step-text"><strong style="color:#ff6644">SERVE HIM</strong> &mdash; he drinks it (good if it's poison)<br><strong style="color:#44cc88">DRINK IT</strong> &mdash; you drink it (good if it heals)</div></div>
-            <div class="step"><div class="step-num">3</div><div class="step-text"><strong style="color:#cc8800">The Stranger takes his turn</strong> &mdash; he mixes a drink and either serves you or drinks it himself.</div></div>
-
-            <h3>Ingredients</h3>
-            <div class="card-legend">
-                <div class="legend-item"><span class="legend-icon">🥃</span><span class="legend-type safe">safe</span> Whiskey &mdash; Heals 1</div>
-                <div class="legend-item"><span class="legend-icon">🍯</span><span class="legend-type safe">safe</span> Honey &mdash; Cancels poison</div>
-                <div class="legend-item"><span class="legend-icon">🧊</span><span class="legend-type safe">safe</span> Ice &mdash; Reduces dmg by 1</div>
-                <div class="legend-item"><span class="legend-icon">🍶</span><span class="legend-type safe">safe</span> Bitters &mdash; Heals 1</div>
-                <div class="legend-item"><span class="legend-icon">☠️</span><span class="legend-type poison">poison</span> Nightshade &mdash; 2 dmg</div>
-                <div class="legend-item"><span class="legend-icon">💀</span><span class="legend-type poison">poison</span> Hemlock &mdash; 3 dmg</div>
-                <div class="legend-item"><span class="legend-icon">🌿</span><span class="legend-type risky">risky</span> Wormwood &mdash; +1 next</div>
-                <div class="legend-item"><span class="legend-icon">🧪</span><span class="legend-type risky">risky</span> Absinthe &mdash; 50/50</div>
-                <div class="legend-item"><span class="legend-icon">🩸</span><span class="legend-type dark">dark</span> Blood &mdash; 1 to both</div>
-                <div class="legend-item"><span class="legend-icon">🌙</span><span class="legend-type wild">wild</span> Moonshine &mdash; Doubles other</div>
-            </div>
-
-            <h3>Strategy Tips</h3>
-            <div class="tip"><p>Mix poison + poison, then SERVE HIM for maximum damage.</p></div>
-            <div class="tip"><p>Mix safe + safe, then DRINK IT to heal yourself.</p></div>
-            <div class="tip"><p>Honey cancels ALL poison in a drink &mdash; use it to make a poisoned drink safe before drinking.</p></div>
-            <div class="tip"><p>Moonshine copies the other ingredient &mdash; Hemlock + Moonshine = double poison!</p></div>
-
-            <button class="close-btn" onclick="closeTutorial()">I UNDERSTAND. LET'S PLAY.</button>
+    <section class="scene" aria-label="The closing-time duel">
+      <aside class="stranger-zone" aria-label="The Stranger">
+        <div id="stranger-portrait" class="stranger-portrait" aria-hidden="true">
+          <div class="hat"></div>
+          <div class="face"><i></i><i></i></div>
+          <div class="collar"></div>
         </div>
+        <div class="speech">
+          <p class="speaker">The Stranger</p>
+          <blockquote id="dialogue">“We have until the rain stops.”</blockquote>
+          <p id="physical-tell" class="physical-tell">His hands rest beneath the bar.</p>
+        </div>
+      </aside>
+
+      <section class="table-zone" aria-label="The bar">
+        <section class="duelist duelist-player" aria-label="Your status">
+          <p class="duelist-name">You · Bartender</p>
+          <div><span>Tolerance</span><output id="player-tolerance" class="pips"></output></div>
+          <div><span>Nerve</span><output id="player-nerve" class="pips pips-nerve"></output></div>
+          <div><span>Returns</span><output id="player-returns" class="tokens"></output></div>
+        </section>
+
+        <section id="ritual-stage" class="ritual-stage" aria-label="Offered glass">
+          <p id="phase-kicker" class="phase-kicker">Your pour</p>
+          <div id="ritual-glass" class="glass glass-ritual is-empty" aria-hidden="true">
+            <div class="glass-sheen"></div>
+            <div id="glass-liquid" class="glass-liquid"></div>
+          </div>
+          <p id="glass-owner" class="glass-owner">Choose two ingredients</p>
+          <div class="trace-meter" aria-label="Visible residue">
+            <span>Clear</span><i></i><i></i><i></i><i></i><span>Clouded</span>
+          </div>
+          <div id="evidence-napkin" class="evidence-napkin">
+            <p>What the glass gives away</p>
+            <strong id="trace-clue">No drink has been poured.</strong>
+            <span id="peek-clue">Trust costs nerve.</span>
+          </div>
+        </section>
+
+        <section class="duelist duelist-stranger" aria-label="Stranger status">
+          <p class="duelist-name">The Stranger</p>
+          <div><span>Tolerance</span><output id="stranger-tolerance" class="pips"></output></div>
+          <div><span>Nerve</span><output id="stranger-nerve" class="pips pips-nerve"></output></div>
+          <div><span>Returns</span><output id="stranger-returns" class="tokens"></output></div>
+        </section>
+      </section>
+
+      <section class="decision-zone" aria-labelledby="decision-title">
+        <div class="decision-copy">
+          <p id="turn-number" class="eyebrow">Your hand</p>
+          <h2 id="decision-title">Choose two ingredients.</h2>
+          <p id="decision-help">Every card exists in the room. Watch what leaves the deck.</p>
+        </div>
+
+        <div id="ingredient-hand" class="ingredient-hand" aria-label="Your ingredients"></div>
+
+        <fieldset id="claim-controls" class="claim-controls" hidden>
+          <legend>What do you call the drink?</legend>
+          <div id="claim-options" class="claim-options"></div>
+        </fieldset>
+
+        <div id="player-actions" class="action-row" hidden>
+          <button id="keep-button" class="button button-secondary" type="button">Keep it · drink</button>
+          <button id="offer-button" class="button button-primary" type="button">Slide it over · offer</button>
+        </div>
+
+        <div id="incoming-actions" class="action-row incoming-actions" hidden>
+          <button id="inspect-button" class="button button-quiet" type="button">Inspect · 1 nerve</button>
+          <button id="return-button" class="button button-secondary" type="button">Return the glass</button>
+          <button id="drink-button" class="button button-primary" type="button">Drink it</button>
+        </div>
+
+        <article id="reveal-card" class="reveal-card" hidden aria-live="polite">
+          <div id="reveal-sigils" class="reveal-sigils"></div>
+          <div>
+            <p class="eyebrow">The glass confesses</p>
+            <h2 id="recipe-name">Unnamed mixture</h2>
+            <p id="recipe-effect"></p>
+            <p id="resolution-line" class="resolution-line"></p>
+          </div>
+        </article>
+
+        <div id="continue-actions" class="action-row" hidden>
+          <button id="continue-button" class="button button-primary" type="button">Face the next pour</button>
+        </div>
+      </section>
+
+      <footer class="table-footer">
+        <div>
+          <span>Discarded evidence</span>
+          <div id="discard-strip" class="discard-strip" aria-label="Discarded ingredients"></div>
+        </div>
+        <p id="seed-label">Night #000000</p>
+      </footer>
+    </section>
+  </main>
+
+  <dialog id="rules-dialog" class="paper-dialog" aria-labelledby="rules-heading">
+    <form method="dialog">
+      <button class="dialog-close" value="close" aria-label="Close rules">×</button>
+      <p class="eyebrow">House rules</p>
+      <h2 id="rules-heading">Nothing poured stays secret forever.</h2>
+      <ol>
+        <li><strong>Pour.</strong> Combine two cards from your five-card hand.</li>
+        <li><strong>Claim.</strong> Name what the glass contains. Truth is optional.</li>
+        <li><strong>Offer.</strong> Drink your own mixture or slide it to the Stranger.</li>
+        <li><strong>Read.</strong> On his offer, residue and a physical tell are public. Spend Nerve to expose one ingredient.</li>
+        <li><strong>Survive.</strong> At seven poison, you die. Return tokens force a drink back to its maker.</li>
+      </ol>
+      <dl class="rules-resources">
+        <div><dt>Tolerance</dt><dd>How much poison your body has taken.</dd></div>
+        <div><dt>Nerve</dt><dd>Spent to inspect. Correct reads restore it.</dd></div>
+        <div><dt>Returns</dt><dd>Two irrevocable chances to send a glass back.</dd></div>
+      </dl>
+      <p class="fine-print">The deck is finite: two copies of twelve ingredients. Discards remain visible. Honey hides residue; it never cures poison.</p>
+    </form>
+  </dialog>
+
+  <dialog id="result-dialog" class="result-dialog" aria-labelledby="result-heading">
+    <div class="result-inner">
+      <p id="result-eyebrow" class="eyebrow">The rain continues</p>
+      <h2 id="result-heading">You survived the night.</h2>
+      <p id="result-copy"></p>
+      <dl class="result-ledger">
+        <div><dt>Rounds</dt><dd id="result-rounds">0</dd></div>
+        <div><dt>Reads</dt><dd id="result-reads">0</dd></div>
+        <div><dt>Recipes</dt><dd id="result-recipes">0</dd></div>
+      </dl>
+      <div class="action-row">
+        <button id="again-button" class="button button-primary" type="button">One more night</button>
+        <button id="leave-button" class="button button-quiet" type="button">Close the bar</button>
+      </div>
     </div>
+  </dialog>
 
-    <div id="game">
-        <div id="neon-sign">LAST CALL</div>
-        <div id="hp-area">
-            <div class="hp-container">
-                <div class="hp-label">You</div>
-                <div class="hp-bar" id="player-hp"></div>
-            </div>
-            <div class="hp-container">
-                <div class="hp-label">The Stranger</div>
-                <div class="hp-bar" id="stranger-hp"></div>
-            </div>
-        </div>
-        <div id="round-info">Round 1</div>
-        <div id="stranger-area">
-            <div id="stranger-figure">
-                <div id="stranger-eyes"><div class="eye"></div><div class="eye"></div></div>
-                <div id="stranger-smile"></div>
-            </div>
-        </div>
-        <div id="dialogue-box"></div>
-        <div id="drink-area">
-            <div class="glass-wrapper">
-                <div class="glass" id="your-glass"><div class="glass-liquid" id="your-liquid"></div></div>
-                <div class="glass-label">Your glass</div>
-            </div>
-            <div class="glass-wrapper">
-                <div class="glass" id="stranger-glass"><div class="glass-liquid" id="stranger-liquid"></div></div>
-                <div class="glass-label">His glass</div>
-            </div>
-        </div>
-        <div id="action-area">
-            <button class="action-btn" id="btn-serve" onclick="serveDrink()">SERVE HIM</button>
-            <button class="action-btn" id="btn-drink" onclick="drinkYourself()">DRINK IT</button>
-        </div>
-        <div id="cards-area"></div>
-        <div id="bar-surface"></div>
-        <div id="status-text">Select 2 ingredients to mix a drink</div>
-    </div>
-
-    <div id="result-overlay">
-        <h1 id="result-title"></h1>
-        <p id="result-text"></p>
-        <button class="start-btn" onclick="restartGame()">ANOTHER ROUND</button>
-    </div>
-
-    <script>
-    // ===== STATE =====
-    let playerHP = 5, strangerHP = 5, round = 1;
-    let selectedCards = [], currentHand = [];
-    let phase = 'select';
-    let strangerCursed = false, playerCursed = false;
-    let wins = 0, totalGames = 0;
-    let dialogueTimeout = null;
-
-    // ===== INGREDIENTS =====
-    const INGREDIENTS = [
-        { name:'Whiskey', icon:'🥃', type:'safe', desc:'Heals 1 HP', effect:()=>({heal:1,dmg:0}) },
-        { name:'Absinthe', icon:'🧪', type:'risky', desc:'50%: heal 2 or deal 2', effect:()=>Math.random()>0.5?{heal:2,dmg:0}:{heal:0,dmg:2} },
-        { name:'Bitters', icon:'🍶', type:'safe', desc:'Heals 1, reveals intent', effect:()=>({heal:1,dmg:0,reveal:true}) },
-        { name:'Nightshade', icon:'☠️', type:'poison', desc:'Deals 2 damage', effect:()=>({heal:0,dmg:2}) },
-        { name:'Hemlock', icon:'💀', type:'poison', desc:'Deals 3 damage', effect:()=>({heal:0,dmg:3}) },
-        { name:'Honey', icon:'🍯', type:'safe', desc:'Negates all poison', effect:()=>({heal:0,dmg:0,negate:true}) },
-        { name:'Ice', icon:'🧊', type:'safe', desc:'Reduces damage by 1', effect:()=>({heal:0,dmg:0,reduce:1}) },
-        { name:'Wormwood', icon:'🌿', type:'risky', desc:'Next drink: +1 dmg', effect:()=>({heal:0,dmg:0,curse:true}) },
-        { name:'Blood', icon:'🩸', type:'dark', desc:'1 dmg to BOTH players', effect:()=>({heal:0,dmg:1,both:true}) },
-        { name:'Moonshine', icon:'🌙', type:'wild', desc:'Copies other ingredient', effect:()=>({heal:0,dmg:0,copy:true}) },
-    ];
-
-    // ===== DIALOGUE =====
-    const D = {
-        intro: [
-            "Ah... the bartender. I've been waiting.",
-            "Sit. Let's play a little game, you and I.",
-            "The rules are simple. We mix. We drink. We see who falls first.",
-        ],
-        round_start: [
-            "Choose wisely. Or don't. It matters less than you think.",
-            "The ingredients speak to those who listen.",
-            "Every drink tells a story. What will yours say?",
-            "Interesting selection tonight...",
-            "The night is young. We are not.",
-            "I can smell your hesitation. It's... sweet.",
-            "Time moves differently at this hour, don't you think?",
-            "The bottles are watching. They always do.",
-        ],
-        serve_poison: [
-            "How generous of you.",
-            "You think I can't taste your intentions?",
-            "Ah. Bitter. Like regret.",
-            "Is this how you treat all your customers?",
-            "Mmm. You've done this before, haven't you?",
-        ],
-        serve_safe: [
-            "Mmm. You're too kind. That worries me.",
-            "A gift? Or a strategy?",
-            "Delicious. But I wonder what you kept for yourself.",
-            "Generosity in this game is... suspicious.",
-        ],
-        drink_poison: [
-            "Brave. Or foolish. The line is thin.",
-            "You'd poison yourself? Interesting.",
-            "Pain is just information, bartender.",
-            "Self-sacrifice? How... noble.",
-        ],
-        drink_safe: [
-            "Keeping the good stuff? Smart.",
-            "Self-preservation. I respect that.",
-            "You'll need that strength later.",
-            "Enjoy it. It may be your last.",
-        ],
-        stranger_low: [
-            "You're... better than I expected.",
-            "The room is spinning. Or is that just me?",
-            "I haven't felt this alive in centuries.",
-            "Don't celebrate yet. The desperate are dangerous.",
-            "You're making me work for this. Good.",
-        ],
-        player_low: [
-            "I can hear your heartbeat slowing.",
-            "The darkness at the edge of your vision? That's me.",
-            "Almost over now. Almost.",
-            "You fought well. For a mortal.",
-            "Can you feel it? The cold creeping in?",
-        ],
-        stranger_turn: [
-            "My turn. Watch carefully.",
-            "Now... let me show you how it's done.",
-            "I've been doing this longer than you can imagine.",
-            "Pay attention. You might learn something.",
-        ],
-        stranger_serves_you: [
-            "Drink up, bartender.",
-            "A gift. From me to you.",
-            "I insist.",
-            "Don't be rude. Drink.",
-        ],
-        stranger_drinks: [
-            "Cheers.",
-            "To your health. What's left of it.",
-            "Sometimes you have to take your own medicine.",
-            "I've tasted worse. In darker places.",
-        ],
-    };
-
-    function getD(cat) { const l=D[cat]; return l[Math.floor(Math.random()*l.length)]; }
-
-    // ===== AUDIO =====
-    let actx = null;
-    function initAudio() { if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); }
-
-    function sfx(type) {
-        if(!actx) return;
-        const t = actx.currentTime;
-        const o = actx.createOscillator(), g = actx.createGain();
-        o.connect(g); g.connect(actx.destination);
-        if(type==='pour') { o.type='sine'; o.frequency.setValueAtTime(180,t); o.frequency.linearRampToValueAtTime(120,t+0.4); g.gain.setValueAtTime(0.04,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.5); o.start(t); o.stop(t+0.5); }
-        else if(type==='clink') { o.type='sine'; o.frequency.setValueAtTime(2200,t); o.frequency.exponentialRampToValueAtTime(800,t+0.12); g.gain.setValueAtTime(0.07,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.15); o.start(t); o.stop(t+0.15); }
-        else if(type==='damage') { o.type='sawtooth'; o.frequency.setValueAtTime(90,t); o.frequency.exponentialRampToValueAtTime(35,t+0.25); g.gain.setValueAtTime(0.1,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.3); o.start(t); o.stop(t+0.3); }
-        else if(type==='heal') { o.type='sine'; o.frequency.setValueAtTime(400,t); o.frequency.linearRampToValueAtTime(650,t+0.2); g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.25); o.start(t); o.stop(t+0.25); }
-        else if(type==='select') { o.type='sine'; o.frequency.setValueAtTime(550,t); g.gain.setValueAtTime(0.03,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.06); o.start(t); o.stop(t+0.06); }
-        else if(type==='heartbeat') { o.type='sine'; o.frequency.setValueAtTime(60,t); g.gain.setValueAtTime(0.08,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.2); o.start(t); o.stop(t+0.2); }
-        else if(type==='win') { o.type='sine'; o.frequency.setValueAtTime(300,t); o.frequency.linearRampToValueAtTime(500,t+0.3); o.frequency.linearRampToValueAtTime(700,t+0.6); g.gain.setValueAtTime(0.06,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.8); o.start(t); o.stop(t+0.8); }
-        else if(type==='lose') { o.type='sawtooth'; o.frequency.setValueAtTime(200,t); o.frequency.linearRampToValueAtTime(50,t+0.8); g.gain.setValueAtTime(0.08,t); g.gain.exponentialRampToValueAtTime(0.001,t+1); o.start(t); o.stop(t+1); }
-    }
-
-    // ===== RAIN =====
-    function initRain() {
-        const c = document.getElementById('rain'), ctx = c.getContext('2d');
-        c.width = window.innerWidth; c.height = window.innerHeight;
-        const drops = Array.from({length:80}, ()=>({x:Math.random()*c.width, y:Math.random()*c.height, s:2+Math.random()*3, l:10+Math.random()*12}));
-        (function draw() {
-            ctx.clearRect(0,0,c.width,c.height);
-            ctx.strokeStyle='rgba(150,180,200,0.3)'; ctx.lineWidth=0.5;
-            for(let d of drops) { ctx.beginPath(); ctx.moveTo(d.x,d.y); ctx.lineTo(d.x+0.5,d.y+d.l); ctx.stroke(); d.y+=d.s; if(d.y>c.height){d.y=-d.l;d.x=Math.random()*c.width;} }
-            requestAnimationFrame(draw);
-        })();
-    }
-
-    // ===== UI =====
-    function updateHP() {
-        let ph='', sh='';
-        for(let i=0;i<5;i++) ph+=`<div class="hp-pip ${i<playerHP?'full':'empty'}"></div>`;
-        for(let i=0;i<5;i++) sh+=`<div class="hp-pip ${i<strangerHP?'full':'empty'}"></div>`;
-        document.getElementById('player-hp').innerHTML = ph;
-        document.getElementById('stranger-hp').innerHTML = sh;
-
-        // Vignette intensifies as player HP drops
-        document.getElementById('vignette').style.opacity = 0.3 + (5-playerHP)*0.12;
-        // Heartbeat when low
-        document.getElementById('heartbeat').style.opacity = playerHP <= 2 ? 1 : 0;
-        // Stranger smile when player is low
-        document.getElementById('stranger-smile').className = playerHP <= 2 ? 'visible' : '';
-        // Eyes get angry when stranger is low
-        document.querySelectorAll('.eye').forEach(e => e.className = strangerHP <= 2 ? 'eye angry' : 'eye');
-    }
-
-    function showDialogue(text, duration) {
-        if(dialogueTimeout) clearTimeout(dialogueTimeout);
-        const box = document.getElementById('dialogue-box');
-        box.textContent = ''; box.classList.add('visible');
-        let i = 0;
-        const iv = setInterval(()=>{
-            if(i<text.length){box.textContent+=text[i];i++;}
-            else{clearInterval(iv); if(duration) dialogueTimeout=setTimeout(()=>box.classList.remove('visible'),duration);}
-        }, 25);
-    }
-
-    function dealCards() {
-        currentHand = [];
-        const pool = [...INGREDIENTS];
-        // Guarantee at least 1 poison and 1 safe
-        const poisons = pool.filter(c=>c.type==='poison');
-        const safes = pool.filter(c=>c.type==='safe');
-        currentHand.push(poisons[Math.floor(Math.random()*poisons.length)]);
-        currentHand.push(safes[Math.floor(Math.random()*safes.length)]);
-        // Fill 3 more randomly (avoid too many duplicates)
-        for(let i=0;i<3;i++) {
-            let pick = pool[Math.floor(Math.random()*pool.length)];
-            currentHand.push(pick);
-        }
-        currentHand.sort(()=>Math.random()-0.5);
-        renderCards();
-    }
-
-    function renderCards() {
-        const area = document.getElementById('cards-area');
-        area.innerHTML = '';
-        currentHand.forEach((card,idx)=>{
-            const el = document.createElement('div');
-            el.className = 'card card-deal';
-            el.style.animationDelay = (idx*0.08)+'s';
-            el.innerHTML = `<span class="card-type ${card.type}">${card.type}</span><span class="card-icon">${card.icon}</span><span class="card-name">${card.name}</span><span class="card-desc">${card.desc}</span>`;
-            el.onclick = ()=>selectCard(idx);
-            if(selectedCards.includes(idx)) el.classList.add('selected');
-            if(selectedCards.length>=2 && !selectedCards.includes(idx)) el.classList.add('disabled');
-            area.appendChild(el);
-        });
-    }
-
-    function selectCard(idx) {
-        if(phase!=='select') return;
-        initAudio(); sfx('select');
-        if(selectedCards.includes(idx)) selectedCards=selectedCards.filter(i=>i!==idx);
-        else if(selectedCards.length<2) selectedCards.push(idx);
-        renderCards();
-        if(selectedCards.length===2) {
-            phase='action';
-            document.getElementById('action-area').style.display='flex';
-            document.getElementById('status-text').textContent='Serve it to him, or drink it yourself?';
-            mixDrinkVisual();
-        } else {
-            document.getElementById('action-area').style.display='none';
-            document.getElementById('status-text').textContent=`Select 2 ingredients (${selectedCards.length}/2)`;
-        }
-    }
-
-    function mixDrinkVisual() {
-        sfx('pour');
-        const c1=currentHand[selectedCards[0]], c2=currentHand[selectedCards[1]];
-        const colors={poison:'#44cc44',safe:'#cc8800',risky:'#cccc44',dark:'#8844cc',wild:'#cc44cc'};
-        const liq = document.getElementById('your-liquid');
-        liq.style.height='55%';
-        liq.style.background=`linear-gradient(to top, ${colors[c1.type]||'#cc8800'}, ${colors[c2.type]||'#cc8800'})`;
-    }
-
-    function resolveDrink(target) {
-        const c1=currentHand[selectedCards[0]], c2=currentHand[selectedCards[1]];
-        let totalDmg=0, totalHeal=0, hasNegate=false, reduceAmt=0, hasCurse=false, hasBoth=false, hasCopy=false;
-
-        [c1,c2].forEach(c=>{ const e=c.effect(); if(e.negate)hasNegate=true; if(e.reduce)reduceAmt+=e.reduce; if(e.curse)hasCurse=true; if(e.both)hasBoth=true; if(e.copy)hasCopy=true; });
-
-        let cards=[c1,c2];
-        if(hasCopy){ const other=cards.find(c=>{const e=c.effect();return!e.copy;}); if(other)cards=[other,other]; }
-
-        cards.forEach(c=>{ const e=c.effect(); if(e.dmg>0&&!hasNegate)totalDmg+=e.dmg; if(e.heal>0)totalHeal+=e.heal; });
-
-        totalDmg=Math.max(0,totalDmg-reduceAmt);
-        // CAP max damage at 4 per drink for balance
-        totalDmg=Math.min(4,totalDmg);
-
-        if(target==='stranger'&&strangerCursed){totalDmg+=1;strangerCursed=false;}
-        if(target==='player'&&playerCursed){totalDmg+=1;playerCursed=false;}
-        if(hasCurse){if(target==='stranger')strangerCursed=true;else playerCursed=true;}
-
-        if(target==='stranger'){
-            strangerHP=Math.min(5,strangerHP+totalHeal);
-            strangerHP=Math.max(0,strangerHP-totalDmg);
-            if(hasBoth)playerHP=Math.max(0,playerHP-1);
-        } else {
-            playerHP=Math.min(5,playerHP+totalHeal);
-            playerHP=Math.max(0,playerHP-totalDmg);
-            if(hasBoth)strangerHP=Math.max(0,strangerHP-1);
-        }
-        return {dmg:totalDmg, heal:totalHeal, both:hasBoth};
-    }
-
-    function serveDrink() {
-        if(phase!=='action') return;
-        phase='resolve';
-        document.getElementById('action-area').style.display='none';
-        sfx('clink');
-
-        const sl=document.getElementById('stranger-liquid'), yl=document.getElementById('your-liquid');
-        sl.style.height=yl.style.height; sl.style.background=yl.style.background; yl.style.height='0%';
-
-        setTimeout(()=>{
-            const r=resolveDrink('stranger');
-            updateHP();
-            if(r.dmg>0){sfx('damage');flash('#ff000030');document.getElementById('stranger-figure').classList.add('damaged');setTimeout(()=>document.getElementById('stranger-figure').classList.remove('damaged'),400);showDialogue(getD('serve_poison'),3000);}
-            else{sfx('heal');showDialogue(getD('serve_safe'),3000);}
-            setTimeout(()=>{sl.style.height='0%';checkEnd()||strangerTurn();},2200);
-        },900);
-    }
-
-    function drinkYourself() {
-        if(phase!=='action') return;
-        phase='resolve';
-        document.getElementById('action-area').style.display='none';
-        sfx('clink');
-
-        setTimeout(()=>{
-            const r=resolveDrink('player');
-            updateHP();
-            document.getElementById('your-liquid').style.height='0%';
-            if(r.dmg>0){sfx('damage');flash('#44cc4430');showDialogue(getD('drink_poison'),3000);}
-            else{sfx('heal');showDialogue(getD('drink_safe'),3000);}
-            setTimeout(()=>{checkEnd()||strangerTurn();},2200);
-        },900);
-    }
-
-    function strangerTurn() {
-        phase='stranger-turn';
-        document.getElementById('cards-area').innerHTML='';
-        document.getElementById('status-text').textContent="The Stranger is mixing...";
-        showDialogue(getD('stranger_turn'),2500);
-
-        setTimeout(()=>{
-            const ai=strangerAI();
-            const sl=document.getElementById('stranger-liquid'), yl=document.getElementById('your-liquid');
-            const colors={poison:'#44cc44',safe:'#cc8800',risky:'#cccc44',dark:'#8844cc'};
-            sl.style.height='55%'; sl.style.background=colors[ai.dominant]||'#cc8800';
-            sfx('pour');
-
-            setTimeout(()=>{
-                if(ai.target==='player'){
-                    yl.style.height='55%'; yl.style.background=sl.style.background; sl.style.height='0%';
-                    sfx('clink');
-                    showDialogue(getD('stranger_serves_you'),2500);
-                    setTimeout(()=>{
-                        playerHP=Math.max(0,playerHP-ai.dmg); playerHP=Math.min(5,playerHP+ai.heal);
-                        if(ai.both)strangerHP=Math.max(0,strangerHP-1);
-                        updateHP(); yl.style.height='0%';
-                        if(ai.dmg>0){sfx('damage');flash('#ff000030');}
-                        if(playerHP<=2)setTimeout(()=>showDialogue(getD('player_low'),3000),500);
-                        setTimeout(()=>{checkEnd()||nextRound();},2200);
-                    },1000);
-                } else {
-                    sfx('clink');
-                    showDialogue(getD('stranger_drinks'),2500);
-                    setTimeout(()=>{
-                        strangerHP=Math.max(0,strangerHP-ai.dmg); strangerHP=Math.min(5,strangerHP+ai.heal);
-                        if(ai.both)playerHP=Math.max(0,playerHP-1);
-                        updateHP(); sl.style.height='0%';
-                        if(ai.heal>0)sfx('heal');
-                        if(strangerHP<=2)setTimeout(()=>showDialogue(getD('stranger_low'),3000),500);
-                        setTimeout(()=>{checkEnd()||nextRound();},2200);
-                    },1000);
-                }
-            },1800);
-        },2800);
-    }
-
-    function strangerAI() {
-        let dmg=0, heal=0, both=false, dominant='safe', target='player';
-        const aggression = 0.3 + round*0.05; // Gets more aggressive each round
-
-        if(strangerHP<=2){
-            // Desperate: mostly heal, sometimes kamikaze
-            if(Math.random()<0.55){heal=1+Math.floor(Math.random()*2);target='stranger';dominant='safe';}
-            else{dmg=2;target='player';dominant='poison';}
-        } else if(playerHP<=2){
-            // Go for kill
-            dmg=2+Math.floor(Math.random()*2); dmg=Math.min(3,dmg);
-            target='player'; dominant='poison';
-        } else {
-            let roll=Math.random();
-            if(roll<aggression){dmg=1+Math.floor(Math.random()*2);target='player';dominant='poison';}
-            else if(roll<aggression+0.3){heal=1;target='stranger';dominant='safe';}
-            else{
-                // Risky play
-                if(Math.random()>0.5){dmg=2;target='player';dominant='risky';}
-                else{heal=2;target='stranger';dominant='risky';}
-            }
-        }
-        return {dmg:Math.min(dmg,4), heal, both, dominant, target};
-    }
-
-    function nextRound() {
-        round++;
-        document.getElementById('round-info').textContent='Round '+round;
-        selectedCards=[]; phase='select';
-        document.getElementById('status-text').textContent='Select 2 ingredients to mix a drink';
-        showDialogue(getD('round_start'),3000);
-        setTimeout(()=>dealCards(),1200);
-    }
-
-    function checkEnd() {
-        if(strangerHP<=0){
-            wins++; totalGames++;
-            setTimeout(()=>{
-                sfx('win');
-                const ov=document.getElementById('result-overlay');
-                document.getElementById('result-title').textContent='HE FALLS';
-                document.getElementById('result-title').style.color='#cc8800';
-                let txt = wins>=3
-                    ? `"You've beaten me three times now. Perhaps... you are the one I've been looking for. Take my seat. The next customer will arrive shortly." [TRUE ENDING - ${wins} wins]`
-                    : `"Well played, bartender. Same time tomorrow?" He smiles. The shadows swallow him whole. [Win ${wins}/${totalGames}]`;
-                document.getElementById('result-text').textContent=txt;
-                ov.style.display='flex';
-            },1200);
-            return true;
-        }
-        if(playerHP<=0){
-            totalGames++;
-            setTimeout(()=>{
-                sfx('lose');
-                const ov=document.getElementById('result-overlay');
-                document.getElementById('result-title').textContent='LAST CALL';
-                document.getElementById('result-title').style.color='#ff3300';
-                document.getElementById('result-text').textContent=`"Don't worry. You'll wake up. You always do. And I'll be here. Waiting." The world goes dark. The clock reads 3:00 AM. [Round ${round} - ${wins}/${totalGames} wins]`;
-                ov.style.display='flex';
-            },1200);
-            return true;
-        }
-        return false;
-    }
-
-    function flash(color) {
-        const el=document.getElementById('effect-flash');
-        el.style.background=color; el.style.opacity='1';
-        setTimeout(()=>{el.style.opacity='0';},250);
-    }
-
-    // ===== TUTORIAL =====
-    let tutorialSeen = false;
-    function showTutorial() {
-        document.getElementById('title-screen').style.display='none';
-        document.getElementById('tutorial-overlay').style.display='flex';
-    }
-    function closeTutorial() {
-        document.getElementById('tutorial-overlay').style.display='none';
-        if(!tutorialSeen) { tutorialSeen=true; startGame(); }
-    }
-
-    // ===== START =====
-    function startGame() {
-        initAudio();
-        document.getElementById('title-screen').style.display='none';
-        document.getElementById('game').style.display='flex';
-        document.getElementById('help-btn').style.display='block';
-        initRain(); resetGame();
-        showDialogue(D.intro[0],3500);
-        setTimeout(()=>showDialogue(D.intro[1],3500),4000);
-        setTimeout(()=>showDialogue(D.intro[2],3500),8000);
-        setTimeout(()=>{dealCards();document.getElementById('status-text').textContent='Select 2 ingredients to mix a drink';},11000);
-    }
-
-    function resetGame() {
-        playerHP=5; strangerHP=5; round=1; selectedCards=[]; phase='select';
-        strangerCursed=false; playerCursed=false;
-        updateHP();
-        document.getElementById('round-info').textContent='Round 1';
-        document.getElementById('your-liquid').style.height='0%';
-        document.getElementById('stranger-liquid').style.height='0%';
-        document.getElementById('cards-area').innerHTML='';
-        document.getElementById('action-area').style.display='none';
-    }
-
-    function restartGame() {
-        document.getElementById('result-overlay').style.display='none';
-        resetGame();
-        showDialogue(getD('round_start'),3000);
-        setTimeout(()=>dealCards(),1500);
-    }
-
-    window.addEventListener('resize',()=>{const c=document.getElementById('rain');c.width=innerWidth;c.height=innerHeight;});
-    </script>
+  <p id="live-region" class="sr-only" aria-live="polite"></p>
 </body>
 </html>
