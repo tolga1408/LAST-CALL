@@ -1,4 +1,5 @@
 (function attachLastCallCore(root, factory) {
+    // Shared by the browser controller and the Node verification harness.
     const api = factory();
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     if (root) root.LastCallCore = api;

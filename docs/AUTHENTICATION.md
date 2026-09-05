@@ -1,4 +1,4 @@
-# Authentication and Data Flow
+# Authentication, Credentials, and Data Flow
 
 ## Current state: no application authentication
 
@@ -12,8 +12,8 @@ The GitHub credential used by a developer or connector to read this repository i
 | --- | --- | --- |
 | Static web host | Returns HTML, CSS, and JavaScript | Only for delivering the build over HTTPS |
 | `index.html` | Defines the interface | No |
-| `game.js` | Runs interaction state and local statistics | No; players control their browser |
-| `game-core.js` | Resolves deck, recipes, AI, and match results | No; it is client code |
+| `src/game.js` | Runs interaction state and local statistics | No; players control their browser |
+| `src/game-core.js` | Resolves deck, recipes, AI, and match results | No; it is client code |
 | Browser `localStorage` | Stores non-sensitive aggregate progress | No; editable and clearable by the player |
 | Node tests/simulation | Development-only verification | Not part of runtime |
 
@@ -21,14 +21,14 @@ The GitHub credential used by a developer or connector to read this repository i
 
 ```text
 Browser ── GET /index.html ──────▶ Static host
-Browser ── GET /styles.css ──────▶ Static host
-Browser ── GET /game-core.js ────▶ Static host
-Browser ── GET /game.js ─────────▶ Static host
+Browser ── GET /src/styles.css ──────▶ Static host
+Browser ── GET /src/game-core.js ────▶ Static host
+Browser ── GET /src/game.js ─────────▶ Static host
 
 Player action
    │
    ▼
-game.js controller ──▶ game-core.js rules ──▶ DOM update
+src/game.js controller ──▶ src/game-core.js rules ──▶ DOM update
    │
    └───────────────▶ localStorage statistics
 ```

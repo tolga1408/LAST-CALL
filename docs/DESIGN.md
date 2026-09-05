@@ -1,4 +1,4 @@
-# LAST CALL — Vertical Slice Design
+# LAST CALL — Vertical Slice Game Design
 
 ## The promise
 

@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const Core = require('../game-core');
+const Core = require('../src/game-core');
 
 test('a new match deals two five-card hands without creating cards', () => {
     const match = Core.createMatch(1408);

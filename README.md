@@ -45,17 +45,18 @@ The tests cover deck conservation, deterministic dealing, recipe interactions, b
 ## Architecture
 
 ```text
-index.html       semantic game surface and dialogs
-styles.css       object-led bar scene, cards, states, responsive layout
-game.js          browser controller, interaction flow, sound, local statistics
-game-core.js     pure seeded rules engine used by browser and Node tests
-tests/           rule and invariant tests
-scripts/         repeatable balance simulation
+index.html          semantic game surface and dialogs
+src/styles.css      object-led bar scene, cards, states, responsive layout
+src/game.js         browser controller, interaction flow, sound, local statistics
+src/game-core.js    pure seeded rules engine used by browser and Node tests
+tests/              rule and invariant tests
+scripts/            repeatable balance simulation
+docs/               game design and authentication architecture
 ```
 
 The rules engine is deliberately independent from the DOM. A later port can keep the deck, recipes, AI policy, and seeded simulation while replacing the browser controller.
 
-See [DESIGN.md](DESIGN.md) for the game model and production roadmap. See [AUTHENTICATION.md](AUTHENTICATION.md) for the current request/data flow and the boundary required before adding paid entitlements, cloud saves, leaderboards, or multiplayer.
+See [docs/DESIGN.md](docs/DESIGN.md) for the game model and production roadmap. See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md) for the current request/data flow and the boundary required before adding paid entitlements, cloud saves, leaderboards, or multiplayer.
 
 ## Status
 

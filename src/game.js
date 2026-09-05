@@ -1,6 +1,7 @@
 (function runLastCall() {
     'use strict';
 
+    // This file owns browser interaction; deterministic rules stay in game-core.js.
     const Core = window.LastCallCore;
     if (!Core) throw new Error('LAST CALL rules engine failed to load.');
 

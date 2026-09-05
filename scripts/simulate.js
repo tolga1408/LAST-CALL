@@ -1,6 +1,6 @@
 'use strict';
 
-const Core = require('../game-core');
+const Core = require('../src/game-core');
 
 const runs = Math.max(100, Number(process.argv[2]) || 10000);
 const outcomes = { win: 0, loss: 0, draw: 0, timeout: 0 };
