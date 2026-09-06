@@ -42,6 +42,12 @@ npm run simulate
 
 The tests cover deck conservation, deterministic dealing, recipe interactions, blood-oath draws, claims, effects, and the Stranger's use of real hand cards. The simulation runs 10,000 seeded heuristic matches and prints win rate and average length; it is a smoke signal, not a substitute for human playtesting.
 
+## Deployment
+
+Pull requests run the deterministic test suite and balance smoke test. After GitHub Pages is configured to use **GitHub Actions**, every verified push to `main` publishes a minimal artifact containing only `index.html` and `src/`.
+
+To roll back a release, revert the faulty commit on `main`. The same workflow verifies and redeploys the previous known-good source.
+
 ## Architecture
 
 ```text
